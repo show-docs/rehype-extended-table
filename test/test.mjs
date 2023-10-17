@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import test from 'ava';
 import cliHtml from 'cli-html';
-import prettier from 'prettier';
+import { format as prettier } from 'prettier';
 import rehypeSortAttributes from 'rehype-sort-attributes';
 import rehypeStringify from 'rehype-stringify';
 import {
@@ -28,7 +28,7 @@ const input2 = await readFile(
 const gfm = () => unified().use(remarkParse).use(remarkGFM);
 
 function format(code) {
-  return prettier.format(code, { parser: 'html' });
+  return prettier(code, { parser: 'html' });
 }
 
 async function macro(t, input) {
@@ -48,9 +48,9 @@ async function macro(t, input) {
     .use(rehypeStringify)
     .process(input);
 
-  t.is(format(result.value), format(expected.value));
+  t.is(await format(result.value), await format(expected.value));
 
-  t.snapshot(format(result.value));
+  t.snapshot(await format(result.value));
 
   t.log(cliHtml(result.value));
 }
