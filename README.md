@@ -18,12 +18,12 @@ Rehype plugin to support table syntax allowing colspan / rowspan.
 - same base syntax support with [remark-extended-table]
 
 ```markdown
-| Head 1       | Head 2       | Head 3       | Head 4       |
-| ------------ | ------------ | ------------ | ------------ |
-| >            | Merged (2x1) | Cell         | Cell         |
-| Merged (1x3) | >            | Merged (2x2) | Cell         |
-| ^            | >            | ^            | Cell         |
-| ^            | >            | >            | Merged (3x1) |
+| Head 1 | Head 2 | Head 3 | Head 4 | Head 5 |
+| ------ | ------ | ------ | ------ | ------ |
+| >      | (2x1)  | Cell   | Cell   | Cell   |
+| (1x3)  | >      | (2x2)  | >      | (2x2)  |
+| ^      | >      | ^      | Cell   | Cell   |
+| ^      | >      | >      | (3x1)  | Cell   |
 ```
 
 ↓↓
@@ -36,24 +36,28 @@ Rehype plugin to support table syntax allowing colspan / rowspan.
       <th>Head 2</th>
       <th>Head 3</th>
       <th>Head 4</th>
+      <th>Head 5</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td colspan="2">Merged (2x1)</td>
+      <td colspan="2">(2x1)</td>
+      <td>Cell</td>
+      <td>Cell</td>
+      <td>Cell</td>
+    </tr>
+    <tr>
+      <td rowspan="3">(1x3)</td>
+      <td colspan="2" rowspan="2">(2x2)</td>
+      <td colspan="2">(2x2)</td>
+    </tr>
+    <tr>
       <td>Cell</td>
       <td>Cell</td>
     </tr>
     <tr>
-      <td rowspan="3">Merged (1x3)</td>
-      <td colspan="2" rowspan="2">Merged (2x2)</td>
+      <td colspan="3">(3x1)</td>
       <td>Cell</td>
-    </tr>
-    <tr>
-      <td>Cell</td>
-    </tr>
-    <tr>
-      <td colspan="3">Merged (3x1)</td>
     </tr>
   </tbody>
 </table>
@@ -89,11 +93,32 @@ unified()
   .process(markdown);
 ```
 
+### Options
+
+[remark-extended-table]: https://www.npmjs.com/package/remark-extended-table
+
+#### options.mergeTo
+
+- enum: ['right', 'left']
+- default: 'right'
+- description: Direction of table merge columns, using `right` is same as [remark-extended-table], using `left` is same as Excel.
+
+When using `left`, Write:
+
+```markdown
+| Head 1 | Head 2 | Head 3 | Head 4 | Head 4 |
+| :----: | :----: | :----: | :----: | :----: |
+| (2x1)  |   <    |  Cell  |  Cell  |  Cell  |
+| (1x3)  | (2x2)  |   <    | (2x2)  |   <    |
+|   ^    |   ^    |   <    |  Cell  |  Cell  |
+|   ^    | (3x1)  |   <    |   <    |  Cell  |
+```
+
 ## Tips
 
 ### Why do I need this plugin?
 
-[remark-extended-table](https://www.npmjs.com/package/remark-extended-table) is good, but it wiil overrides [remark-gfm] behaviors, and have to inject handlers to [remark-rehype](https://www.npmjs.com/package/remark-rehype):
+[remark-extended-table] is good, but it wiil overrides [remark-gfm] behaviors, and have to inject handlers to [remark-rehype](https://www.npmjs.com/package/remark-rehype):
 
 ```js
 import rehypeStringify from 'rehype-stringify';
@@ -123,30 +148,28 @@ Some times we can't do that, you can use this plugin instead.
 
 For example, in [Docusaurus](https://docusaurus.io/) projects:
 
-```cjs
-// docusaurus.config.cjs
-module.exports = async function createConfig() {
-  const { rehypeExtendedTable } = await import('rehype-extended-table');
+```mjs
+// docusaurus.config.mjs
+import { rehypeExtendedTable } from 'rehype-extended-table';
 
-  return {
-    presets: [
-      [
-        'classic',
-        {
-          docs: {
-            rehypePlugins: [
-              [
-                rehypeExtendedTable,
-                {
-                  // ...options here
-                }
-              ]
+export default {
+  presets: [
+    [
+      'classic',
+      {
+        docs: {
+          rehypePlugins: [
+            [
+              rehypeExtendedTable,
+              {
+                // ...options here
+              }
             ]
-          }
+          ]
         }
-      ]
+      }
     ]
-  };
+  ]
 };
 ```
 
@@ -154,6 +177,7 @@ module.exports = async function createConfig() {
 
 - rehype-extended-table support MDX props name by default.
 - rehype-extended-table can handle complex [merge case](./test/fixtures/1.md) without bug
+- support `options.mergeTo`
 
 ## Related
 
